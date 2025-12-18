@@ -1,0 +1,39 @@
+# Discipline & risk rules used to flag violations.
+# These rules are NOT trading advice and do not include any order logic.
+#
+# Notes:
+# - Times are interpreted in TIMEZONE from env.
+# - Notional is approximate: abs(amount * price).
+
+allowed_trading_hours:
+  # If set, trades outside these windows will be flagged.
+  # Example windows:
+  # - "09:00-12:00"
+  # - "14:00-17:30"
+  windows: []
+
+max_trades_per_day: 20
+
+cooldown_minutes_after_loss: 15
+
+revenge_trade:
+  # If you lose, then quickly increase size and re-enter, we call it revenge/tilt.
+  enabled: true
+  loss_threshold_usdt: 10.0
+  within_minutes: 30
+  size_multiplier: 1.5
+
+fomo_entry:
+  enabled: true
+  timeframe: "5m"
+  lookback_minutes: 15
+  momentum_threshold_pct: 0.8
+
+flip_flop:
+  enabled: true
+  within_minutes: 60
+  max_direction_changes: 3
+
+min_subjective_note_chars_daily: 80
+
+

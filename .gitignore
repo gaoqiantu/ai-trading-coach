@@ -1,0 +1,25 @@
+### Python
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+### Virtualenv
+venv/
+.venv/
+
+### Env / secrets
+.env
+
+### Local data (contains personal trade history)
+data/*.sqlite3
+
+### OS / editor noise
+.DS_Store
+._*
+.idea/
+.vscode/
+
+
