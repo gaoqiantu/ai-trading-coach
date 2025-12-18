@@ -150,6 +150,29 @@ def create_app() -> FastAPI:
         if req.enable_scheduler is not None:
             _set("ENABLE_SCHEDULER", "1" if req.enable_scheduler else "0", secret=False)
 
+        # Apply scheduler toggle immediately without requiring a redeploy/restart.
+        # - If scheduler exists, restart it to pick up latest config.
+        # - If disabled, shut it down.
+        try:
+            existing = getattr(app.state, "scheduler", None)
+            if existing is not None:
+                try:
+                    existing.shutdown(wait=False)
+                except Exception:
+                    pass
+                app.state.scheduler = None
+
+            enabled = os.getenv("ENABLE_SCHEDULER", "0").strip() in ("1", "true", "True", "yes", "YES")
+            if enabled:
+                cfg2 = load_config()
+                runner2 = ReviewRunner(cfg2)
+                sched2 = create_background_scheduler(runner=runner2)
+                sched2.start()
+                app.state.scheduler = sched2
+        except Exception:
+            # Don't fail bootstrap for scheduler lifecycle issues; admin can retry.
+            pass
+
         return {"ok": True}
 
     @app.on_event("startup")
