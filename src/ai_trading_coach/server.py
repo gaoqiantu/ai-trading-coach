@@ -79,12 +79,24 @@ def create_app() -> FastAPI:
         cfg = load_config()
         sched = getattr(app.state, "scheduler", None)
         daily_next = None
+        weekly_next = None
+        monthly_check_next = None
         if sched is not None:
             try:
                 job = sched.get_job("daily_review")
                 daily_next = job.next_run_time.isoformat() if job and job.next_run_time else None
             except Exception:
                 daily_next = None
+            try:
+                job = sched.get_job("weekly_review")
+                weekly_next = job.next_run_time.isoformat() if job and job.next_run_time else None
+            except Exception:
+                weekly_next = None
+            try:
+                job = sched.get_job("monthly_review_check")
+                monthly_check_next = job.next_run_time.isoformat() if job and job.next_run_time else None
+            except Exception:
+                monthly_check_next = None
         # only report presence, never echo secrets
         return {
             "bitget": {
@@ -111,6 +123,9 @@ def create_app() -> FastAPI:
                 "enable_scheduler_env": os.getenv("ENABLE_SCHEDULER", ""),
                 "scheduler_running": bool(sched is not None),
                 "daily_next_run_time": daily_next,
+                "weekly_next_run_time": weekly_next,
+                "monthly_check_next_run_time": monthly_check_next,
+                "monthly_runs_last_day_only": True,
             },
         }
 
