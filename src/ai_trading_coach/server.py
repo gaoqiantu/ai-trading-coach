@@ -173,9 +173,8 @@ def create_app() -> FastAPI:
                     pass
                 app.state.scheduler = None
 
-            enabled = os.getenv("ENABLE_SCHEDULER", "0").strip() in ("1", "true", "True", "yes", "YES")
-            if enabled:
-                cfg2 = load_config()
+            cfg2 = load_config()
+            if cfg2.enable_scheduler:
                 runner2 = ReviewRunner(cfg2)
                 sched2 = create_background_scheduler(runner=runner2)
                 sched2.start()
