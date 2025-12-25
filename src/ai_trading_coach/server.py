@@ -77,6 +77,14 @@ def create_app() -> FastAPI:
     def admin_status(authorization: str | None = Header(default=None)) -> dict:
         _require_ai_builder_token(authorization)
         cfg = load_config()
+        sched = getattr(app.state, "scheduler", None)
+        daily_next = None
+        if sched is not None:
+            try:
+                job = sched.get_job("daily_review")
+                daily_next = job.next_run_time.isoformat() if job and job.next_run_time else None
+            except Exception:
+                daily_next = None
         # only report presence, never echo secrets
         return {
             "bitget": {
@@ -99,7 +107,10 @@ def create_app() -> FastAPI:
                 "weekly_dow": cfg.weekly_dow,
                 "weekly_at": cfg.weekly_at,
                 "monthly_at": cfg.monthly_at,
-                "enable_scheduler_env": os.getenv("ENABLE_SCHEDULER", "0"),
+                "enable_scheduler_effective": bool(cfg.enable_scheduler),
+                "enable_scheduler_env": os.getenv("ENABLE_SCHEDULER", ""),
+                "scheduler_running": bool(sched is not None),
+                "daily_next_run_time": daily_next,
             },
         }
 
@@ -179,9 +190,9 @@ def create_app() -> FastAPI:
     def _startup() -> None:
         # Optional: run scheduler in the same process (single service / single port).
         # IMPORTANT: keep uvicorn workers=1; otherwise jobs may run multiple times.
-        if os.getenv("ENABLE_SCHEDULER", "0").strip() not in ("1", "true", "True", "yes", "YES"):
-            return
         cfg = load_config()
+        if not cfg.enable_scheduler:
+            return
         runner = ReviewRunner(cfg)
         sched = create_background_scheduler(runner=runner)
         sched.start()

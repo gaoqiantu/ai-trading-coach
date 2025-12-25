@@ -73,6 +73,7 @@ class AppConfig:
     weekly_dow: str
     weekly_at: str
     monthly_at: str
+    enable_scheduler: bool
 
     # report lookback windows
     daily_lookback_days: int
@@ -135,6 +136,16 @@ def load_config(env_path: str | None = None) -> AppConfig:
                 v = sv
         return v or default
 
+    def _get_bool(k: str, default: bool = False) -> bool:
+        raw = os.getenv(k, "").strip()
+        if not raw:
+            sv = _maybe_from_store(k)
+            if sv:
+                raw = sv.strip()
+        if not raw:
+            return default
+        return raw in ("1", "true", "True", "yes", "YES", "on", "ON")
+
     return AppConfig(
         bitget_api_key=_get_str("BITGET_API_KEY", ""),
         bitget_api_secret=_get_str("BITGET_API_SECRET", ""),
@@ -158,6 +169,7 @@ def load_config(env_path: str | None = None) -> AppConfig:
         weekly_dow=_get_str("WEEKLY_DOW", "sat").lower() or "sat",
         weekly_at=_get_str("WEEKLY_AT", "23:00") or "23:00",
         monthly_at=_get_str("MONTHLY_AT", "23:00") or "23:00",
+        enable_scheduler=_get_bool("ENABLE_SCHEDULER", default=False),
         daily_lookback_days=int(os.getenv("DAILY_LOOKBACK_DAYS", "1")),
         weekly_lookback_days=int(os.getenv("WEEKLY_LOOKBACK_DAYS", "7")),
         monthly_lookback_days=int(os.getenv("MONTHLY_LOOKBACK_DAYS", "30")),
